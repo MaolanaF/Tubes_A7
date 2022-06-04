@@ -21,8 +21,8 @@ address AlokasiQueue(InfoKucing informasi){
    
    P=(address)malloc(sizeof(ElmQueue));  
    if(P!=nil) {
-   	P->info= informasi;
-	P->next = nil;
+   	info(P) = informasi;
+	next(P) = nil;
    }
    return P;
 }
@@ -54,7 +54,8 @@ void EnQue(Queue *Q, InfoKucing informasi){
 	
 }
 /** author: Yayang Setia Budi
-	Modul untuk menghapus element pertama Queue (deQue) **/
+	Modul untuk menghapus element pertama Queue (deQue), sebelum dihapus informasi dari Head antrian akan
+	ditampung dalam variabel**/
 void DelQue(Queue *Antrian, Onprocess *onproses){
   address First = HEAD(*Antrian);
   
@@ -95,8 +96,6 @@ char* Token(String inputanPenyakit, String Hasil){
 	Modul membuat sebuah list yang berisi nama penyakit disetiap nodenya **/
 List buildList(String daftarPenyakit){
 	int i;
-	String penyakitTemp;
-	addressList temp;
 	List list;
 	CreateList (&list);
 	 
@@ -123,7 +122,7 @@ void AddsortingQueue(Queue *Q, InfoKucing informasi){
 	//cek kondisi apakah apakah node selanjutnya memiliki prioritas sama
 	//Jika priotas sama maka antrian baru akan berada setelah antrian lama yang memiliki prioritas sama
 	//Jika beda maka modul akan melakukan pembadingan dengan antrian baru sampai mendapat posisi sesuai
-	if(Temp->next->info.prioritas == P->info.prioritas){
+	if(prioritas(next(Temp)) == prioritas(P)){
 		P->next =Temp->next->next;
 		Temp->next->next = P;
 	}else{
@@ -161,7 +160,7 @@ void insertAntrian(Queue *Q, InfoKucing informasi){
 	}
 }
 
-/** author: uhammad Dyfan
+/** author: Muhammad Dyfan
 	Modul untuk convert index/char menjadi nama penyakit yang sesuai **/
 char* namaPenyakit(char nomorPenyakit){
 	
@@ -199,7 +198,7 @@ char* namaPenyakit(char nomorPenyakit){
 	}
 }
 
-/** author: Yayang Setia Budi
+/** author: Maolana F
 	Modul untuk convert index/char menjadi Kategori penyakit yang sesuai **/
 char *kategoriPenyakit(char Penyakit){
 	switch(Penyakit){
@@ -249,7 +248,7 @@ int PeriksaWaktuEstimasi(int Penyakit){
 /*  author: Maolana F
 	Menghitung waktu estimasi pelayanan */
 int HitungWaktuEstimasi(JmlKategoriPenyakit jumlahPerKategori){
-	return (jumlahPerKategori.Ringan*15) + (jumlahPerKategori.Sedang*30) + (jumlahPerKategori.Berat*45);
+	return (jumlahPerKategori.Ringan*15*60) + (jumlahPerKategori.Sedang*30*60) + (jumlahPerKategori.Berat*45*60);
 }
 
 /** author: Yayang Setia Budi
@@ -261,33 +260,40 @@ void Registrasi(Queue *Antrian,Onprocess *Onproses){
 	String daftarPenyakit,penyakitTemp;
 	CreateList(&Info.Penyakit);
 	createEmptyJmlKategori(&jmlKategori);
+	Jam jam;
 	
 	do{
 		system("cls");
-		printf("\n\t\t\t\t\t====================== REGISTRASI ============================\n\n");
+		printf("\n\t\t\t\t\t====================== REGISTRASI ======================\n\n");
 		fflush(stdin);
 		printf("\t\t\t\t\tNama Kucing      : "); scanf("%[^\n]s",&Info.namaKucing);
 		fflush(stdin); 
 		printf("\t\t\t\t\tNama Pemilik     : "); scanf("%[^\n]s",&Info.namaPemilik);
-		
 		fflush(stdin);
-		printf("\t\t\t\t\tWaktu Kedatangan : "); scanf("%d",&Info.waktuDatang);
-		validation = IsValidComeTime(Info.waktuDatang,(*Antrian),(*Onproses));
+		BacaJam(&jam);
+		validation = IsJValid(jam);
 		if(!validation){
 			system("cls");
 			printf("\n\n\t\t\tWaktu Kedatangan tidak valid, tolong masukan waktu yang sesuai !!\n\n");
 			system("pause");
 		}else{
-			ListDaftarPenyakit();
-			fflush(stdin);
-			printf("\t\t\t\t\tDaftar Penyakit  : "); scanf("%[^\n]s",&daftarPenyakit);
-			validation = isValidDiseases(daftarPenyakit);
+			Info.waktuDatang =JamToDetik(jam);
+			validation = IsValidComeTime(Info.waktuDatang,(*Antrian),(*Onproses));
 			if(!validation){
-				printf("\n\n\t\t\tDaftar Penyakit tidak benar, tolong masukan input yang valid !!\n\n");
+				system("cls");
+				printf("\n\n\t\t\tWaktu Kurang dari waktu kedatangan terakhir, tolong masukan waktu yang sesuai !!\n\n");
 				system("pause");
+			}else{
+				ListDaftarPenyakit();
+				fflush(stdin);
+				printf("\t\t\t\t\tDaftar Penyakit  : "); scanf("%[^\n]s",&daftarPenyakit);
+				validation = isValidDiseases(daftarPenyakit);
+				if(!validation){
+					printf("\n\n\t\t\tDaftar Penyakit tidak benar, tolong masukan input yang valid !!\n\n");
+					system("pause");
+				}
 			}
 		}
-		
 	} while(!validation);
 	
 	strcpy(daftarPenyakit,Token(daftarPenyakit,penyakitTemp));
@@ -299,19 +305,22 @@ void Registrasi(Queue *Antrian,Onprocess *Onproses){
     
 
 	insertAntrian(&(*Antrian),Info);
-	UpdateWaktuSelesai(&(*Antrian),getTimeRightNow(*Onproses));
+	UpdateWaktuSelesai(&(*Antrian),(*Onproses));
 }
 
 /** author: Muhammad Dyfan
 	Modul untuk print daftar antrian**/
 void PrintAntrian(Queue Q, Onprocess onproses){
 	address Temp = Q.HEAD;
+	Jam jam;
 	printf("\n\t\t\t\t================== DALAM PERAWATAN ==========================\n");
 	if(onproses.OnGoing != false){
+		jam = DetikToJam(onproses.waktuSelesai);
 		printf("\n\t\t\t\t\tNama Kucing                   : %s",onproses.info.namaKucing);
 		printf("\n\t\t\t\t\tNama Pemilik                  : %s",onproses.info.namaPemilik);
 		printf("\n\t\t\t\t\tNilai Priotas                 : %d",onproses.info.prioritas);
-		printf("\n\t\t\t\t\tSelesai pada                  : %d",onproses.waktuSelesai);
+		printf("\n\t\t\t\t\tSelesai pada                  : ");
+		TulisJam(jam);
 	}else{
 		printf("\n\t\t\t\t\tTidak ada yang sedang dirawat ");
 		
@@ -320,23 +329,27 @@ void PrintAntrian(Queue Q, Onprocess onproses){
 	printf("\n\n\t\t\t\t================== DAFTAR ANTRIAN ===========================\n");
 	if(!IsQueueEmpty(Q)){
 		while(Temp->next != NULL){
+			jam = DetikToJam(Temp->info.waktuSelesai);
 			printf("\n\t\t\t\t\tNama Kucing                   : %s",Temp->info.namaKucing);
 			printf("\n\t\t\t\t\tNama Pemilik                  : %s",Temp->info.namaPemilik);
 			printf("\n\t\t\t\t\tNilai Priotas                 : %d",Temp->info.prioritas);
-			printf("\n\t\t\t\t\tJam Selesai                   : %d",Temp->info.waktuSelesai);
+			printf("\n\t\t\t\t\tJam Selesai                   : ");
+			TulisJam(jam);
 			printf("\n\t\t\t\t\tDaftar penyakit yang diderita : ");
 			PrintDaftarPenyakit(Temp->info.Penyakit.First);
 			printf("\n\t\t\t\t\t-----------------------------------------------------");
 			Temp = Temp->next;
 		}
+			jam = DetikToJam(Temp->info.waktuSelesai);
 			printf("\n\t\t\t\t\tNama Kucing                   : %s",Temp->info.namaKucing);
 			printf("\n\t\t\t\t\tNama Pemilik                  : %s",Temp->info.namaPemilik);
 			printf("\n\t\t\t\t\tNilai Priotas                 : %d",Temp->info.prioritas);
-			printf("\n\t\t\t\t\tJam Selesai                   : %d",Temp->info.waktuSelesai);
+			printf("\n\t\t\t\t\tJam Selesai                   : ");
+			TulisJam(jam);
 			printf("\n\t\t\t\t\tDaftar penyakit yang diderita : ");
 			PrintDaftarPenyakit(Temp->info.Penyakit.First);
 	}else{
-		printf("\n\n\t\t\t\t\tAntrian Kosong");
+		printf("\n\n\t\t\t\t\tAntrian Kosong\n\n");
 	}
 
 }
@@ -389,18 +402,24 @@ int getTimeRightNow(Onprocess Onproses){
 
 /** author: Muhammad Dyfan Ramadhan
 	update waktu selesai pelayanan dari masing-masing kucing**/
-void UpdateWaktuSelesai(Queue *Antrian, int LastTime){
+void UpdateWaktuSelesai(Queue *Antrian, Onprocess otw){
 	address Temp = (*Antrian).HEAD;
-	
+	int LastTime = 0;
+
 	if(!IsQueueEmpty(*Antrian)){
+		if(otw.OnGoing == true){
+			LastTime = otw.waktuSelesai;
+		}else{
+			LastTime = (*Antrian).HEAD->info.waktuDatang;
+		}
 		while(Temp->next != NULL){
 			LastTime = LastTime + Temp->info.estimasiWaktu;
-			Temp->info.waktuSelesai = LastTime;
+			Temp->info.waktuSelesai = LastTime ;
 			Temp = Temp->next;
 		}
 		
 		LastTime = LastTime + Temp->info.estimasiWaktu;
-		Temp->info.waktuSelesai = LastTime;
+		Temp->info.waktuSelesai = LastTime ;
 	}
 }
 
@@ -424,12 +443,13 @@ void cekonproses(Queue *Antrian, Onprocess *onproses){
 			printf("\n\t\t\tTidak ada kucing dalam perawatan, apakah anda ingin memanggil %s untuk dirawat ?     [Y/N]   : ",(*Antrian).HEAD->info.namaKucing);
 			scanf("%c",&jawaban);
 			if(jawaban == 'Y' || jawaban == 'y'){
+				DelQue(&(*Antrian),&(*onproses));
 				printf("\n\n\t\t\t\t\t\t\tMemanggil %s untuk dirawat \n\n",(*onproses).info.namaKucing);
 				loading();
-				DelQue(&(*Antrian),&(*onproses));
 				AddRiwayat((*onproses).info);
+				DelAll (&(*onproses).info.Penyakit);
 			}else if(jawaban == 'N' || jawaban == 'n'){
-				printf("\n\n\t\t\t\t\t\t %s Masuk Antrian \n\n",(*onproses).info.namaKucing);
+				printf("\n\n\t\t\t\t\t\t\t\t %s Masuk Antrian \n\n",(*Antrian).HEAD->info.namaKucing);
 				loading();
 			}else{
 				printf("\n\t\t\tJawab yang bener lah!!");
@@ -445,7 +465,7 @@ void ProsesAntrian(Queue *Antrian,Onprocess *Onproses){
 	int jawaban;
 	do{
 		system("cls");
-		printf("\t\t\t\t\t====================== PROSES ANTRIAN ============================\n\n");
+		printf("\n\t\t\t\t\t====================== PROSES ANTRIAN ============================\n\n");
 		printf("\t\t\t\t\t[1] Panggil kucing\n");
 		printf("\t\t\t\t\t[2] Hapus Antrian \n");
 		printf("\n\t\t\t\t\t Jawaban Anda : ");
@@ -692,28 +712,31 @@ void DelAfter(Queue *Antrian,Onprocess onproses){
 	fflush(stdin);
 	printf("\t\t\t\t\tNama Pemilik : "); scanf("%[^\n]s",&namaPemilik);
 	
-	if(strcmp(namaKucing,Temp->info.namaKucing) == 0 && strcmp(namaPemilik,Temp->info.namaPemilik) == 0){
-		HEAD(*Antrian) = Temp->next;
-		Temp->next == NULL;
-		UpdateWaktuSelesai(&(*Antrian),onproses.waktuSelesai);
+	if(strcmp(namaKucing,NamaKucing(Temp)) == 0 && strcmp(namaPemilik,NamaPemilik(Temp)) == 0){
+		HEAD(*Antrian) = next(Temp);
+		next(Temp) == NULL;
+		UpdateWaktuSelesai(&(*Antrian),onproses);
+		DelAll (&(*Antrian).HEAD->info.Penyakit);
 		DeAlokasi(Temp);
 		IsExistCat = true;
 	}else{
-		while(Temp->next != NULL && IsExistCat == false){
-			if(strcmp(namaKucing,Temp->next->info.namaKucing) == 0 && strcmp(namaPemilik,Temp->next->info.namaPemilik) == 0 && Temp->next != Last){
-				Remove = Temp->next;
-				Temp->next = Temp->next->next;
+		while(next(Temp) != NULL && IsExistCat == false){
+			if(strcmp(namaKucing,NamaKucing(next(Temp))) == 0 && strcmp(namaPemilik,NamaPemilik(Temp)) == 0 && next(Temp) != Last){
+				Remove = next(Temp);
+				next(Temp) = next(next(Temp));
 				Remove->next = NULL;
-				UpdateWaktuSelesai(&(*Antrian),onproses.waktuSelesai);
+				DelAll (&Remove->info.Penyakit);
+				UpdateWaktuSelesai(&(*Antrian),onproses);
 				DeAlokasi(Remove);	
 				IsExistCat = true;
-			}else if(strcmp(namaKucing,Temp->next->info.namaKucing) == 0 && strcmp(namaPemilik,Temp->next->info.namaPemilik) == 0 && Temp->next == Last){
-				Remove = Temp->next;
-				Temp->next = NULL;
+			}else if(strcmp(namaKucing,NamaKucing(next(Temp))) == 0 && strcmp(namaPemilik,NamaPemilik(Temp)) == 0 && next(Temp) == Last){
+				Remove = next(Temp);
+				next(Temp) = NULL;
+				DelAll (&Remove->info.Penyakit);
 				DeAlokasi(Remove);	
 				IsExistCat = true;
 			}else{
-				Temp = Temp->next;
+				Temp = next(Temp);
 			}
 		}
 	}
@@ -723,9 +746,6 @@ void DelAfter(Queue *Antrian,Onprocess onproses){
 	}else{
 		printf("\n\n\t\t\t\t\tDelete Antrian Gagal!!\n");
 	}
-	
-	system("pause");
-
 }
 
 void loading(){

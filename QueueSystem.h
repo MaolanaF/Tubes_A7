@@ -8,23 +8,24 @@ Kelas     : 1A Kelompok A7
 Deskripsi : Header file dari prototype Queue linked list Antrian Aplikasi DocOyen 
 
 Tanggal   : 18-05-2022
-Versi     : 1.1
+Versi     : 3.1
 */ 
 
 #ifndef _QUEUESYSTEM_H 
 #define _QUEUESYSTEM_H 
 #include "boolean.h"
+#include "Adtjam.h"
 #include "list.h"  
 #include <stdio.h> 
 #include <conio.h> 
 #define nil NULL 
-#define koper(P) (P)->jmlKoper
-#define come(P) (P)->waktuDatang
-#define nama(P) (P)->nama
 #define next(P) (P)->next 
-#define finish(P) (P)->waktuFinish
 #define HEAD(Q) (Q).HEAD 
 #define TAIL(Q) (Q).TAIL 
+#define prioritas(P) (P)->info.prioritas
+#define info(P) (P)->info
+#define NamaKucing(P) (P)->info.namaKucing
+#define NamaPemilik(P) (P)->info.namaPemilik
 
 
 typedef char String[100];
@@ -115,7 +116,7 @@ char* Token(String inputanPenyakit, String Hasil);
 char* namaPenyakit(char nomorPenyakit);
 int HitungNilaiPrioritas(JmlKategoriPenyakit jumlahPerKategori);
 int HitungWaktuEstimasi(JmlKategoriPenyakit jumlahPerKategori);
-void UpdateWaktuSelesai(Queue *Antrian, int LastTime);
+void UpdateWaktuSelesai(Queue *Antrian, Onprocess otw);
 void cekonproses(Queue *Antrian, Onprocess *onproses);
 int findMaxWaktuKedatangan(Queue Antrian);
 void ListDaftarPenyakit();
